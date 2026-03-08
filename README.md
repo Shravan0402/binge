@@ -4,7 +4,7 @@ A deeply personalized movie recommendation engine that learns your taste in real
 
 ## Live Demo
 
-[**binge-app.netlify.app**](https://binge-app.netlify.app)
+[**binge-movie-universe.netlify.app**](https://binge-movie-universe.netlify.app)
 
 ---
 
