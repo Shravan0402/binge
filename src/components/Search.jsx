@@ -1,21 +1,10 @@
 import { useState, useMemo } from 'react';
-import { searchMovies } from '../engine/engine';
-import { MOVIES, LANGUAGES } from '../data/movies';
+import { MOVIES } from '../data/movies';
 import MovieCard from './MovieCard';
 
-const LANGUAGE_LABELS = {
-  english: '🌍 English',
-  tamil: '🎬 Tamil',
-  hindi: '🎬 Hindi',
-  telugu: '🎬 Telugu',
-  malayalam: '🎬 Malayalam',
-  kannada: '🎬 Kannada'
-};
-
-export default function Search({ ratings, onRate, onSelectMovie, posters, allMovies }) {
+export default function Search({ ratings, onRate, onSelectMovie, posters, allMovies, filterLanguage }) {
   const [query, setQuery] = useState('');
   const [filterGenre, setFilterGenre] = useState('');
-  const [filterLanguage, setFilterLanguage] = useState('');
 
   // Use allMovies (curated + regional + dynamic) if available, else fallback
   const moviePool = allMovies || MOVIES;
@@ -23,7 +12,7 @@ export default function Search({ ratings, onRate, onSelectMovie, posters, allMov
   const results = useMemo(() => {
     let pool = moviePool;
 
-    // Apply language filter first
+    // Apply global language filter
     if (filterLanguage) {
       pool = pool.filter(m => m.language === filterLanguage);
     }
@@ -50,17 +39,6 @@ export default function Search({ ratings, onRate, onSelectMovie, posters, allMov
     return pool.slice().sort((a, b) => b.rating - a.rating);
   }, [query, filterGenre, filterLanguage, moviePool]);
 
-  // Count movies per language for the current genre filter
-  const languageCounts = useMemo(() => {
-    let pool = moviePool;
-    if (filterGenre) pool = pool.filter(m => m.genres.includes(filterGenre));
-    const counts = {};
-    LANGUAGES.forEach(l => {
-      counts[l] = pool.filter(m => m.language === l).length;
-    });
-    return counts;
-  }, [filterGenre, moviePool]);
-
   const genres = ['action', 'comedy', 'drama', 'horror', 'scifi', 'romance', 'thriller', 'animation', 'fantasy', 'crime', 'adventure', 'war', 'mystery'];
 
   return (
@@ -72,7 +50,7 @@ export default function Search({ ratings, onRate, onSelectMovie, posters, allMov
           <input
             type="text"
             className="search-input"
-            placeholder="Search movies, directors, actors, languages..."
+            placeholder="Search movies, directors, actors..."
             value={query}
             onChange={e => { setQuery(e.target.value); setFilterGenre(''); }}
             autoFocus
@@ -80,28 +58,6 @@ export default function Search({ ratings, onRate, onSelectMovie, posters, allMov
           {query && <button className="search-clear" onClick={() => setQuery('')}>&times;</button>}
         </div>
       </div>
-
-      {/* Language Filter */}
-      {!query && (
-        <div className="language-filters">
-          <button
-            className={`language-btn ${filterLanguage === '' ? 'active' : ''}`}
-            onClick={() => setFilterLanguage('')}
-          >
-            🌐 All Languages
-          </button>
-          {LANGUAGES.map(lang => (
-            <button
-              key={lang}
-              className={`language-btn ${filterLanguage === lang ? 'active' : ''}`}
-              onClick={() => setFilterLanguage(filterLanguage === lang ? '' : lang)}
-            >
-              {LANGUAGE_LABELS[lang]}
-              {languageCounts[lang] > 0 && <span className="lang-count">{languageCounts[lang]}</span>}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Genre Filter */}
       {!query && (
@@ -114,18 +70,15 @@ export default function Search({ ratings, onRate, onSelectMovie, posters, allMov
       )}
 
       {/* Active filters summary */}
-      {(filterGenre || filterLanguage) && !query && (
+      {filterGenre && !query && (
         <div className="active-filters-summary">
-          {filterGenre && <span className="active-filter-tag">Genre: {filterGenre} <button onClick={() => setFilterGenre('')}>&times;</button></span>}
-          {filterLanguage && <span className="active-filter-tag">Language: {filterLanguage} <button onClick={() => setFilterLanguage('')}>&times;</button></span>}
-          {(filterGenre || filterLanguage) && (
-            <button className="clear-all-filters" onClick={() => { setFilterGenre(''); setFilterLanguage(''); }}>Clear all</button>
-          )}
+          <span className="active-filter-tag">Genre: {filterGenre} <button onClick={() => setFilterGenre('')}>&times;</button></span>
+          <button className="clear-all-filters" onClick={() => setFilterGenre('')}>Clear</button>
         </div>
       )}
 
       <div className="search-results">
-        <p className="search-count">{results.length} movies</p>
+        <p className="search-count">{results.length} movies{filterLanguage ? ` in ${filterLanguage}` : ''}</p>
         <div className="search-grid">
           {results.map(movie => (
             <MovieCard

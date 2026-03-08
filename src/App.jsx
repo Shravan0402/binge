@@ -1,15 +1,24 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { buildTasteProfile, getAllChannels, computeTasteDNA, getMoodRecs } from './engine/engine';
 import { fetchAllPosters } from './engine/posterService';
 import { checkForNewMovies, getDynamicMovies } from './engine/movieUpdater';
-import { MOVIES } from './data/movies';
+import { MOVIES, LANGUAGES } from './data/movies';
 import Onboarding from './components/Onboarding';
 import Home from './components/Home';
 import MovieDetail from './components/MovieDetail';
 import MoodSelector from './components/MoodSelector';
 import TasteDNA from './components/TasteDNA';
 import Search from './components/Search';
+
+const LANGUAGE_LABELS = {
+  english: '🌍 English',
+  tamil: '🎬 Tamil',
+  hindi: '🎬 Hindi',
+  telugu: '🎬 Telugu',
+  malayalam: '🎬 Malayalam',
+  kannada: '🎬 Kannada'
+};
 
 // SVG Logo Component
 function BingeLogo({ size = 36 }) {
@@ -53,9 +62,17 @@ export default function App() {
   const [posterProgress, setPosterProgress] = useState(null);
   const [dynamicMovies, setDynamicMovies] = useState([]);
   const [newMovieCount, setNewMovieCount] = useState(0);
+  const [filterLanguage, setFilterLanguage] = useState('');
 
   // Merge all movie sources: curated + regional (already in MOVIES) + dynamic
   const allMovies = [...MOVIES, ...dynamicMovies.filter(dm => !MOVIES.some(m => m.id === dm.id))];
+
+  // Count movies per language
+  const languageCounts = useMemo(() => {
+    const counts = {};
+    LANGUAGES.forEach(l => { counts[l] = allMovies.filter(m => m.language === l).length; });
+    return counts;
+  }, [allMovies]);
 
   // Check for new movie updates on mount
   useEffect(() => {
@@ -85,8 +102,24 @@ export default function App() {
 
   const tasteProfile = Object.keys(ratings).length > 0 ? buildTasteProfile(ratings) : null;
   const tasteDNA = tasteProfile ? computeTasteDNA(tasteProfile) : null;
-  const channels = tasteProfile ? getAllChannels(tasteProfile) : [];
-  const moodRecs = currentMood && tasteProfile ? getMoodRecs(currentMood, tasteProfile, 15) : [];
+  const rawChannels = tasteProfile ? getAllChannels(tasteProfile) : [];
+  const rawMoodRecs = currentMood && tasteProfile ? getMoodRecs(currentMood, tasteProfile, 15) : [];
+
+  // Apply language filter to channels and mood recs
+  const channels = useMemo(() => {
+    if (!filterLanguage) return rawChannels;
+    return rawChannels
+      .map(ch => ({
+        ...ch,
+        movies: ch.movies.filter(({ movie }) => movie.language === filterLanguage)
+      }))
+      .filter(ch => ch.movies.length > 0);
+  }, [rawChannels, filterLanguage]);
+
+  const moodRecs = useMemo(() => {
+    if (!filterLanguage) return rawMoodRecs;
+    return rawMoodRecs.filter(({ movie }) => movie.language === filterLanguage);
+  }, [rawMoodRecs, filterLanguage]);
 
   const handleRate = useCallback((movieId, rating) => {
     setRatings(prev => {
@@ -132,6 +165,26 @@ export default function App() {
         <button className="nav-reset" onClick={handleResetProfile} title="Reset your taste profile">Reset</button>
       </nav>
 
+      {/* Global Language Filter */}
+      <div className="global-language-bar">
+        <button
+          className={`language-btn ${filterLanguage === '' ? 'active' : ''}`}
+          onClick={() => setFilterLanguage('')}
+        >
+          🌐 All
+        </button>
+        {LANGUAGES.map(lang => (
+          <button
+            key={lang}
+            className={`language-btn ${filterLanguage === lang ? 'active' : ''}`}
+            onClick={() => setFilterLanguage(filterLanguage === lang ? '' : lang)}
+          >
+            {LANGUAGE_LABELS[lang]}
+            {languageCounts[lang] > 0 && <span className="lang-count">{languageCounts[lang]}</span>}
+          </button>
+        ))}
+      </div>
+
       {/* Poster loading indicator */}
       {posterProgress && (
         <div className="poster-loading-bar">
@@ -158,7 +211,7 @@ export default function App() {
           <TasteDNA tasteDNA={tasteDNA} ratings={ratings} totalRated={Object.keys(ratings).length} />
         )}
         {currentView === 'search' && (
-          <Search ratings={ratings} onRate={handleRate} onSelectMovie={setSelectedMovie} posters={posters} allMovies={allMovies} />
+          <Search ratings={ratings} onRate={handleRate} onSelectMovie={setSelectedMovie} posters={posters} allMovies={allMovies} filterLanguage={filterLanguage} />
         )}
       </main>
 

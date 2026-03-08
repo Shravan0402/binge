@@ -1474,7 +1474,24 @@ body {
 }
 
 /* ============================================================
-   Language Filters
+   Global Language Filter Bar
+   ============================================================ */
+.global-language-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 12px 24px;
+  background: rgba(15, 15, 30, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+}
+
+/* ============================================================
+   Language Filters (legacy / Search-local)
    ============================================================ */
 .language-filters {
   display: flex;
@@ -1641,6 +1658,26 @@ body {
   .nav-link {
     padding: 6px 10px;
     font-size: 13px;
+  }
+
+  .global-language-bar {
+    gap: 6px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .global-language-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .global-language-bar .language-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 12px;
   }
 
   .hero {
