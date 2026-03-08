@@ -1,6 +1,6 @@
 # BINGE - Your Personal Movie Universe
 
-A deeply personalized movie recommendation engine that learns your taste in real-time — no accounts, no servers, just pure algorithmic magic running entirely in your browser.
+A deeply personalized movie recommendation engine that learns your taste in real-time — no accounts, no servers, just pure algorithmic magic running entirely in your very own browser.
 
 ## Live Demo
 
