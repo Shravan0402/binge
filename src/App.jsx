@@ -88,12 +88,15 @@ export default function App() {
     });
   }, []);
 
-  // Fetch poster images on mount
+  // Fetch poster images on mount — progressive loading
   useEffect(() => {
     const moviesToFetch = allMovies.filter(m => m.wikiTitle);
     setPosterProgress({ done: 0, total: moviesToFetch.length });
-    fetchAllPosters(moviesToFetch, (done, total) => {
+    fetchAllPosters(moviesToFetch, (done, total, partialResults) => {
       setPosterProgress({ done, total });
+      if (partialResults) {
+        setPosters(prev => ({ ...prev, ...partialResults }));
+      }
     }).then(result => {
       setPosters(prev => ({ ...prev, ...result }));
       setPosterProgress(null);

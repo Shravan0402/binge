@@ -2,10 +2,13 @@
 // Poster Service - Fetches movie poster images from Wikipedia
 // Free, no API key required. Uses Wikipedia REST API.
 // Caches results in localStorage for instant subsequent loads.
+// Optimized for fast parallel loading with progressive rendering.
 // ============================================================
 
 const CACHE_KEY = 'binge-posters';
 const CACHE_VERSION = 2;
+const BATCH_SIZE = 10;  // Fetch 10 at a time for faster loading
+const BATCH_DELAY = 50; // Minimal delay between batches (ms)
 
 function getCache() {
   try {
@@ -29,10 +32,8 @@ function saveCache(cache) {
 }
 
 // Upgrade Wikipedia thumbnail URL to a larger size
-function upgradeThumbUrl(url, targetWidth = 500) {
+function upgradeThumbUrl(url, targetWidth = 400) {
   if (!url) return null;
-  // Wikipedia thumb URLs: .../thumb/.../NNNpx-Filename.ext
-  // Change the NNNpx part to our target width
   const match = url.match(/\/(\d+)px-[^/]+$/);
   if (match) {
     return url.replace(/\/\d+px-/, `/${targetWidth}px-`);
@@ -45,77 +46,107 @@ async function fetchSinglePoster(wikiTitle) {
   const encoded = encodeURIComponent(wikiTitle.replace(/ /g, '_'));
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`;
 
-  const res = await fetch(url);
-  if (!res.ok) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout per request
 
-  const data = await res.json();
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
 
-  // Prefer originalimage for best quality, fall back to thumbnail
-  if (data.originalimage?.source) {
-    // If it's a thumbnail URL, upgrade it; otherwise use as-is
-    const src = data.originalimage.source;
-    // Limit to reasonable size for movie poster
-    if (src.includes('/thumb/')) {
-      return upgradeThumbUrl(src, 500);
+    const data = await res.json();
+
+    if (data.originalimage?.source) {
+      const src = data.originalimage.source;
+      if (src.includes('/thumb/')) {
+        return upgradeThumbUrl(src, 400);
+      }
+      return src;
     }
-    return src;
-  }
 
-  if (data.thumbnail?.source) {
-    return upgradeThumbUrl(data.thumbnail.source, 500);
-  }
+    if (data.thumbnail?.source) {
+      return upgradeThumbUrl(data.thumbnail.source, 400);
+    }
 
-  return null;
+    return null;
+  } catch {
+    clearTimeout(timeout);
+    return null;
+  }
 }
 
-// Fetch posters for all movies, with caching
+// Preload an image into browser cache for instant rendering
+function preloadImage(url) {
+  return new Promise((resolve) => {
+    if (!url) { resolve(); return; }
+    const img = new Image();
+    img.onload = resolve;
+    img.onerror = resolve;
+    img.src = url;
+  });
+}
+
+// Fetch posters for all movies with progressive loading
+// Calls onProgress with partial results so UI can render as images arrive
 export async function fetchAllPosters(movies, onProgress) {
   const cache = getCache();
-  const results = { ...cache };
+  const results = {};
   const toFetch = [];
 
+  // Step 1: Instantly return all cached posters
   for (const movie of movies) {
     if (!movie.wikiTitle) continue;
     const key = String(movie.id);
-    if (results[key] && results[key] !== '_v') {
-      continue; // Already cached
+    if (cache[key] && cache[key] !== '_v') {
+      results[key] = cache[key];
+    } else {
+      toFetch.push(movie);
     }
-    toFetch.push(movie);
+  }
+
+  // Report cached results immediately
+  if (Object.keys(results).length > 0 && onProgress) {
+    onProgress(movies.length - toFetch.length, movies.length, results);
   }
 
   if (toFetch.length === 0) {
     return results;
   }
 
-  // Fetch in batches of 5 to avoid overwhelming the API
-  const batchSize = 5;
-  let completed = 0;
+  // Step 2: Fetch uncached posters in larger parallel batches
+  let completed = movies.length - toFetch.length;
 
-  for (let i = 0; i < toFetch.length; i += batchSize) {
-    const batch = toFetch.slice(i, i + batchSize);
-    const promises = batch.map(async (movie) => {
-      try {
-        const posterUrl = await fetchSinglePoster(movie.wikiTitle);
-        if (posterUrl) {
-          results[String(movie.id)] = posterUrl;
+  for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+    const batch = toFetch.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (movie) => {
+        try {
+          const posterUrl = await fetchSinglePoster(movie.wikiTitle);
+          if (posterUrl) {
+            results[String(movie.id)] = posterUrl;
+            // Preload the image so it renders instantly when the component sees it
+            preloadImage(posterUrl);
+          }
+        } catch {
+          // Silently fail for individual movies
         }
-      } catch {
-        // Silently fail for individual movies
-      }
-      completed++;
-      if (onProgress) {
-        onProgress(completed, toFetch.length);
-      }
-    });
+        completed++;
+      })
+    );
 
-    await Promise.allSettled(promises);
-    // Small delay between batches
-    if (i + batchSize < toFetch.length) {
-      await new Promise(r => setTimeout(r, 100));
+    // Report progress with partial results after each batch
+    if (onProgress) {
+      onProgress(completed, movies.length, { ...results });
+    }
+
+    // Tiny delay between batches to avoid throttling
+    if (i + BATCH_SIZE < toFetch.length) {
+      await new Promise(r => setTimeout(r, BATCH_DELAY));
     }
   }
 
-  saveCache(results);
+  // Save all results to cache
+  saveCache({ ...cache, ...results });
   return results;
 }
 

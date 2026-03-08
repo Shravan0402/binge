@@ -8,6 +8,7 @@ const LANG_FLAGS = {
 export default function MovieCard({ movie, rating, matchPercent, onRate, onClick, size = 'normal', posterUrl, showLanguage }) {
   const gradient = getMovieGradient(movie);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const hasPoster = posterUrl && !imgError;
   const langTag = movie.language && movie.language !== 'english' ? LANG_FLAGS[movie.language] : null;
 
@@ -24,13 +25,15 @@ export default function MovieCard({ movie, rating, matchPercent, onRate, onClick
       tabIndex={onClick ? 0 : undefined}
     >
       {/* Poster */}
-      <div className="movie-poster" style={hasPoster ? {} : { background: gradient }}>
+      <div className="movie-poster" style={{ background: gradient }}>
         {hasPoster && (
           <img
             src={posterUrl}
             alt={movie.title}
-            className="poster-img"
+            className={`poster-img ${imgLoaded ? 'loaded' : ''}`}
             loading="lazy"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
           />
         )}

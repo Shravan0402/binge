@@ -1370,7 +1370,7 @@ body {
 }
 
 /* ============================================================
-   Poster Images
+   Poster Images — smooth fade-in on load
    ============================================================ */
 .poster-img {
   position: absolute;
@@ -1379,6 +1379,13 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  will-change: opacity;
+}
+
+.poster-img.loaded {
+  opacity: 1;
 }
 
 .detail-hero-img {
@@ -1388,51 +1395,61 @@ body {
   height: 100%;
   object-fit: cover;
   z-index: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* ============================================================
-   Watch Links
+   Streaming Platform Links
    ============================================================ */
-.detail-watch-links {
+.streaming-platforms {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.watch-btn {
+.platform-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 10px 18px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  transition: var(--transition);
+  transition: all 0.25s ease;
   cursor: pointer;
-}
-
-.watch-btn-primary {
-  background: linear-gradient(135deg, var(--accent), #7c3aed);
-  color: white;
-  box-shadow: 0 4px 16px var(--accent-glow);
-}
-
-.watch-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px var(--accent-glow);
-}
-
-.watch-btn-secondary {
   background: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border);
 }
 
-.watch-btn-secondary:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+.platform-link:hover {
+  transform: translateY(-2px);
+  border-color: var(--platform-color);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 8px color-mix(in srgb, var(--platform-color) 30%, transparent);
+}
+
+.platform-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--platform-color);
+}
+
+.platform-name {
+  white-space: nowrap;
+}
+
+.platform-link-search {
+  border-style: dashed;
+  --platform-color: var(--text-muted);
 }
 
 /* ============================================================
@@ -1639,12 +1656,66 @@ body {
 }
 
 /* ============================================================
-   Responsive
+   Responsive — Tablet (1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .hero {
+    padding: 48px 32px 32px;
+  }
+
+  .hero-title {
+    font-size: 42px;
+  }
+
+  .channel {
+    padding: 0 0 0 32px;
+    margin-bottom: 32px;
+  }
+
+  .channel-header {
+    padding-right: 32px;
+  }
+
+  .channel-movies {
+    padding-right: 32px;
+    gap: 16px;
+  }
+
+  .movie-card {
+    width: 175px;
+  }
+
+  .mood-page,
+  .dna-page,
+  .search-page {
+    padding: 32px 24px;
+  }
+
+  .search-title,
+  .mood-page-title,
+  .dna-title {
+    font-size: 38px;
+  }
+
+  .detail-body {
+    padding: 20px 24px 28px;
+  }
+}
+
+/* ============================================================
+   Responsive — Mobile (768px)
    ============================================================ */
 @media (max-width: 768px) {
+  /* Nav */
   .nav {
-    padding: 0 16px;
-    gap: 12px;
+    padding: 0 12px;
+    gap: 8px;
+    height: 56px;
+  }
+
+  .nav-brand svg {
+    width: 28px;
+    height: 28px;
   }
 
   .nav-title {
@@ -1657,17 +1728,24 @@ body {
 
   .nav-link {
     padding: 6px 10px;
-    font-size: 13px;
+    font-size: 12px;
   }
 
+  .nav-reset {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  /* Language Bar */
   .global-language-bar {
     gap: 6px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     overflow-x: auto;
     flex-wrap: nowrap;
     justify-content: flex-start;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    top: 56px;
   }
 
   .global-language-bar::-webkit-scrollbar {
@@ -1676,53 +1754,153 @@ body {
 
   .global-language-bar .language-btn {
     flex-shrink: 0;
-    padding: 6px 14px;
-    font-size: 12px;
+    padding: 6px 12px;
+    font-size: 11px;
   }
 
+  /* Poster loading bar */
+  .poster-loading-bar {
+    top: 56px;
+  }
+
+  /* Hero */
   .hero {
-    padding: 40px 20px 24px;
+    padding: 32px 16px 20px;
+  }
+
+  .hero::before {
+    width: 300px;
+    height: 150px;
   }
 
   .hero-title {
-    font-size: 32px;
+    font-size: 28px;
+    letter-spacing: 2px;
   }
 
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  /* Channels */
   .channel {
-    padding: 0 0 0 20px;
+    padding: 0 0 0 16px;
+    margin-bottom: 28px;
   }
 
   .channel-header {
-    padding-right: 20px;
+    padding-right: 16px;
+    margin-bottom: 12px;
   }
 
   .channel-title {
-    font-size: 18px;
+    font-size: 16px;
+    gap: 6px;
+  }
+
+  .channel-icon {
+    font-size: 16px;
+  }
+
+  .channel-subtitle {
+    font-size: 11px;
   }
 
   .channel-movies {
-    padding-right: 20px;
+    padding-right: 16px;
+    gap: 12px;
   }
 
   .scroll-btn {
     display: none;
   }
 
+  /* Movie Cards */
   .movie-card {
-    width: 150px;
+    width: 140px;
   }
 
   .movie-card.large {
-    width: 200px;
+    width: 180px;
+  }
+
+  .movie-card.small {
+    width: 120px;
+  }
+
+  .poster-title {
+    font-size: 15px;
+  }
+
+  .poster-year {
+    font-size: 10px;
+  }
+
+  .poster-content {
+    padding: 16px 10px 10px;
+  }
+
+  .movie-info {
+    padding: 6px 2px 0;
+  }
+
+  .movie-title {
+    font-size: 12px;
+  }
+
+  .movie-meta {
+    font-size: 11px;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .genre-mini {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .match-badge {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .language-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .quick-rate {
+    gap: 4px;
+    bottom: 50px;
+  }
+
+  .quick-rate-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  /* Onboarding */
+  .onboarding-content {
+    padding: 24px 16px;
+  }
+
+  .onboarding-title {
+    font-size: 36px;
   }
 
   .onboarding-movie {
     flex-direction: column;
     text-align: center;
+    gap: 20px;
   }
 
   .onboarding-movie-title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .onboarding-movie-overview {
+    font-size: 13px;
   }
 
   .onboarding-genres {
@@ -1730,41 +1908,347 @@ body {
   }
 
   .onboarding-actions {
-    gap: 8px;
+    gap: 6px;
   }
 
   .rate-btn {
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  /* Modal / Movie Detail */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
   }
 
   .modal-content {
     margin-top: 0;
-    border-radius: var(--radius) var(--radius) 0 0;
-    max-height: 100vh;
+    margin-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .detail-hero {
+    padding: 40px 20px 24px;
+    min-height: 160px;
   }
 
   .detail-title {
-    font-size: 28px;
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .detail-meta {
+    font-size: 12px;
+  }
+
+  .detail-director {
+    font-size: 12px;
+  }
+
+  .detail-body {
+    padding: 16px 16px 24px;
+  }
+
+  .detail-overview {
+    font-size: 13px;
+    line-height: 1.6;
   }
 
   .detail-row {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
+  .detail-section h3 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .streaming-platforms {
+    gap: 8px;
+  }
+
+  .platform-link {
+    padding: 8px 14px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .platform-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .platform-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .cast-tag {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .genre-tag,
+  .mood-tag,
+  .theme-tag {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+
+  .dna-bar-label {
+    width: 70px;
+    font-size: 11px;
+  }
+
+  .detail-rate-btn {
+    padding: 12px 14px;
+    min-width: 70px;
+    font-size: 12px;
+  }
+
+  .rate-emoji {
+    font-size: 20px;
+  }
+
+  .detail-rating-buttons {
+    gap: 8px;
+  }
+
+  .detail-similar {
+    gap: 10px;
+  }
+
+  /* Mood */
   .mood-page,
   .dna-page,
   .search-page {
-    padding: 24px 16px;
+    padding: 20px 12px;
+  }
+
+  .mood-page-title,
+  .dna-title {
+    font-size: 32px;
+  }
+
+  .mood-page-subtitle,
+  .dna-subtitle {
+    font-size: 13px;
+  }
+
+  .mood-header {
+    margin-bottom: 24px;
   }
 
   .mood-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .mood-card {
+    padding: 14px 8px;
+    gap: 4px;
+  }
+
+  .mood-emoji {
+    font-size: 26px;
+  }
+
+  .mood-name {
+    font-size: 12px;
+  }
+
+  .mood-desc {
+    font-size: 10px;
+  }
+
+  .mood-results-title {
+    font-size: 24px;
+  }
+
+  .mood-results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  /* Search */
+  .search-title {
+    font-size: 32px;
+    margin-bottom: 14px;
+  }
+
+  .search-input {
+    padding: 12px 44px;
+    font-size: 14px;
+  }
+
+  .search-filters {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .filter-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  /* Taste DNA */
+  .dna-header {
+    margin-bottom: 24px;
+  }
+
+  .radar-chart {
+    padding: 16px;
+  }
+
+  .radar-chart svg {
+    max-width: 300px;
+    height: auto;
+  }
+
+  .dna-radar-section {
+    margin-bottom: 32px;
+  }
+
+  /* Active filters */
+  .active-filters-summary {
+    margin-bottom: 12px;
+  }
+
+  .active-filter-tag {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  /* Toast */
+  .new-movies-toast {
+    top: 64px;
+    font-size: 12px;
+    padding: 8px 16px;
+  }
+}
+
+/* ============================================================
+   Responsive — Small phones (480px)
+   ============================================================ */
+@media (max-width: 480px) {
+  .nav {
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  .nav-link {
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+
+  .nav-reset {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 12px;
+  }
+
+  .movie-card {
+    width: 120px;
+  }
+
+  .movie-card.large {
+    width: 150px;
+  }
+
+  .movie-card.small {
+    width: 100px;
+  }
+
+  .poster-title {
+    font-size: 13px;
+  }
+
+  .movie-title {
+    font-size: 11px;
+  }
+
+  .channel-title {
+    font-size: 14px;
+  }
+
+  .mood-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .mood-card {
+    padding: 10px 6px;
+  }
+
+  .mood-emoji {
+    font-size: 22px;
+  }
+
+  .mood-name {
+    font-size: 11px;
+  }
+
+  .mood-desc {
+    display: none;
   }
 
   .search-grid,
   .mood-results-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+
+  .detail-title {
+    font-size: 20px;
+  }
+
+  .detail-rating-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .detail-rate-btn {
+    min-width: unset;
+  }
+
+  .streaming-platforms {
+    gap: 6px;
+  }
+
+  .platform-link {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .onboarding-title {
+    font-size: 28px;
+  }
+
+  .onboarding-movie-title {
+    font-size: 20px;
+  }
+
+  .rate-btn {
+    padding: 6px 10px;
+    font-size: 11px;
   }
 }
